@@ -103,9 +103,10 @@ async def process_decompilation(message):
                                 )
                             os.remove(downloaded_file)
                             logger.info(f"Sent decompilation result from {decompiler_name}.")
-            await message.remove_reaction("⏪", client.user)
-            await message.add_reaction("✅")  
-            logger.info("Decompilation process completed successfully.")
+                            await message.remove_reaction("⏪", client.user)
+                            await message.add_reaction("✅")  
+                            logger.info("Decompilation process completed successfully.")
+            
         else:
             await message.channel.send("Failed to retrieve decompilations.")
             await message.remove_reaction("⏪", client.user)
