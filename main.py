@@ -1,6 +1,7 @@
 import discord
 import requests
 import os
+import logging
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,6 +14,9 @@ intents.message_content = True
 
 client = discord.Client(intents=intents)
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+
 def download_file(url, filename):
     try:
         response = requests.get(url, stream=True)
@@ -20,12 +24,16 @@ def download_file(url, filename):
         with open(filename, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
+        logger.info(f"Downloaded file: {filename}")
         return filename
     except requests.exceptions.RequestException as e:
-        print(f"Error downloading {filename}: {e}")
+        logger.error(f"Error downloading {filename}: {e}")
         return None
 
 async def process_decompilation(message):
+    await message.add_reaction("⏪") 
+    logger.info(f"Processing decompilation request from {message.author} for message: {message.content}")
+
     decompiler_requested = message.content.split()[1:] if len(message.content.split()) > 1 else []
     target_decompilers = {"binja": "BinaryNinja", "angr": "angr", "ghidra": "Ghidra", "hexrays": "Hex-Rays"}
 
@@ -36,19 +44,23 @@ async def process_decompilation(message):
 
     if not message.attachments:
         await message.channel.send("Please attach a file to be analyzed.")
+        await message.remove_reaction("⏪", client.user)
         return
 
     attachment = message.attachments[0]
     file_path = f"/tmp/{attachment.filename}"
     await attachment.save(file_path)
+    logger.info(f"Saved attachment to {file_path}")
     
     with open(file_path, "rb") as binary:
         files = {"file": (attachment.filename, binary, "application/octet-stream")}
         response = requests.post(API, files=files)
     os.remove(file_path)
+    logger.info(f"Sent file to API. Status code: {response.status_code}")
 
     if response.status_code == 429:
         await message.channel.send("Wait for 15 seconds, rate-limited by Dogbolt.")
+        await message.remove_reaction("⏪", client.user)
         return
 
     if response.status_code == 201:
@@ -58,19 +70,27 @@ async def process_decompilation(message):
         if decompilation_response.status_code == 200:
             results = decompilation_response.json().get("results", [])
             sent_decompilers = set()  
-            
+            logger.info("Processing decompilation results.")
+
             for item in results:
                 decompiler_name = item.get("decompiler", {}).get("name")
                 download_url = item.get("download_url")
+                error_message = item.get("error", "")
 
-                if decompiler_name in decompiler_filters and download_url and decompiler_name not in sent_decompilers:
-                    filename = f"{decompiler_name.replace(' ', '_')}.c"
-                    downloaded_file = download_file(download_url, filename)
-                    sent_decompilers.add(decompiler_name)
+                if decompiler_name in decompiler_filters:
+                    if error_message:
+                        await message.reply(f"{decompiler_name} failed to decompile. Error: {error_message}")
+                        await message.remove_reaction("⏪", client.user)
+                        await message.add_reaction("❌")  
+                        logger.error(f"**{decompiler_name} error during decompilation: {error_message}**")
+                    elif download_url:
+                        filename = f"{decompiler_name.replace(' ', '_')}.c"
+                        downloaded_file = download_file(download_url, filename)
+                        sent_decompilers.add(decompiler_name)
 
-                    if downloaded_file:
-                        with open(downloaded_file, "r") as f:
-                            code_content = f.read()
+                        if downloaded_file:
+                            with open(downloaded_file, "r") as f:
+                                code_content = f.read()
 
                             if len(code_content) <= 2000:
                                 await message.channel.send(
@@ -81,21 +101,46 @@ async def process_decompilation(message):
                                     f"**Decompilation from {decompiler_name}** (content too long for inline display):",
                                     file=discord.File(downloaded_file)
                                 )
-                        os.remove(downloaded_file)
+                            os.remove(downloaded_file)
+                            logger.info(f"Sent decompilation result from {decompiler_name}.")
+            await message.remove_reaction("⏪", client.user)
+            await message.add_reaction("✅")  
+            logger.info("Decompilation process completed successfully.")
         else:
             await message.channel.send("Failed to retrieve decompilations.")
+            await message.remove_reaction("⏪", client.user)
+            await message.add_reaction("❌")  
+            logger.error("Failed to retrieve decompilations from API.")
     else:
         await message.channel.send(f"Status Code: {response.status_code} - {response.text}")
+        await message.remove_reaction("⏪", client.user)
+        await message.add_reaction("❌")
+        logger.error(f"API error: {response.status_code} - {response.text}")
+
 
 @client.event
 async def on_ready():
-    print(f"Ready for decompilation as {client.user}")
+    logger.info(f"Bot ready and logged in as {client.user}")
 
 @client.event
 async def on_message(message):
-    if message.author == client.user or not message.content.startswith(";revme"):
+    if message.author == client.user:
         return
-    await process_decompilation(message)
+
+    if message.content.startswith(";revme help"):
+        help_text = (
+            "Usage:\n"
+            "1. Attach a file to be analyzed.\n"
+            "2. Use `;revme` followed by one or more decompiler names to specify which decompilers to use.\n"
+            "   - Available decompilers: `binja`, `ghidra`, `hexrays`, `angr`\n"
+            "3. Example command: `;revme binja ghidra`\n\n"
+            "The bot will process your request and return the decompiled code."
+        )
+        await message.channel.send(help_text)
+        return
+
+    if message.content.startswith(";revme"):
+        await process_decompilation(message)
 
 @client.event
 async def on_message_edit(before, after):
