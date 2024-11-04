@@ -129,10 +129,10 @@ async def on_message(message):
     if message.content.startswith(";revme help"):
         help_text = (
             "Usage:\n"
-            "1. Attach a file to be analyzed.\n"
+            "1. Attach a file **MAX 2MB** to be analyzed.\n"
             "2. Use `;revme` followed by one or more decompiler names to specify which decompilers to use.\n"
             "   - Available decompilers: `binja`, `ghidra`, `hexrays`, `angr`\n"
-            "3. Example command: `;revme binja ghidra`\n\n"
+            "3. Example command: `;revme binja`\n\n"
             "The bot will process your request and return the decompiled code."
         )
         await message.channel.send(help_text)
