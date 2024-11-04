@@ -2,9 +2,7 @@ import discord
 import requests
 import os
 import logging
-from dotenv import load_dotenv
 
-load_dotenv()
 
 API = "https://dogbolt.org/api/binaries/"
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
