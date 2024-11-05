@@ -3,7 +3,7 @@ import requests
 import os
 import logging
 import random
-
+import subprocess
 
 API = "https://dogbolt.org/api/binaries/"
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
@@ -119,6 +119,24 @@ async def process_decompilation(message):
         logger.error(f"API error: {response.status_code} - {response.text}")
 
 
+async def process_hex_dump(message, file_path):
+    try:
+        hex_output = subprocess.check_output(["xxd", file_path]).decode("utf-8")
+        await message.channel.send(f"**Hex dump of {os.path.basename(file_path)}:**\n```{hex_output[:2000]}```")
+        logger.info("Sent hex dump.")
+    except Exception as e:
+        logger.error(f"Failed to generate hex dump: {e}")
+        await message.channel.send("Failed to generate hex dump.")
+
+async def process_disassembly(message, file_path):
+    try:
+        asm_output = subprocess.check_output(["objdump", "-d", "-M", "intel", file_path]).decode("utf-8")
+        await message.channel.send(f"**Disassembly of {os.path.basename(file_path)}:**\n```asm\n{asm_output[:2000]}```")
+        logger.info("Sent disassembly.")
+    except Exception as e:
+        logger.error(f"Failed to generate disassembly: {e}")
+        await message.channel.send("Failed to generate disassembly.")
+
 @client.event
 async def on_ready():
     logger.info(f"Bot ready and logged in as {client.user}")
@@ -134,13 +152,29 @@ async def on_message(message):
             "1. Attach a file **MAX 2MB** to be analyzed.\n"
             "2. Use `;revme` followed by one or more decompiler names to specify which decompilers to use.\n"
             "   - Available decompilers: `binja`, `ghidra`, `hexrays`, `angr`\n"
-            "3. Example command: `;revme binja`\n\n"
+            "3. Example command: `;revme binja`\n"
+            "4. Use `;revme hex` to print hex dump of the file.\n"
+            "5. Use `;revme asm` to print disassembly of the file.\n\n"
             "The bot will process your request and return the decompiled code."
         )
         await message.channel.send(help_text)
         return
 
-    if message.content.startswith(";revme"):
+    if message.content.startswith(";revme hex") and message.attachments:
+        attachment = message.attachments[0]
+        file_path = f"/tmp/{attachment.filename}"
+        await attachment.save(file_path)
+        await process_hex_dump(message, file_path)
+        os.remove(file_path)
+
+    elif message.content.startswith(";revme asm") and message.attachments:
+        attachment = message.attachments[0]
+        file_path = f"/tmp/{attachment.filename}"
+        await attachment.save(file_path)
+        await process_disassembly(message, file_path)
+        os.remove(file_path)
+
+    elif message.content.startswith(";revme"):
         await process_decompilation(message)
 
 @client.event
