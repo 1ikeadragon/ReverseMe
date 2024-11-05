@@ -8,8 +8,17 @@ import subprocess
 API = "https://dogbolt.org/api/binaries/"
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 
-intents = discord.Intents.default()
+intents = discord.Intents.all()
 intents.message_content = True
+
+# TESTING SLASH START 
+bot = commands.Bot(command_prefix='/', intents=intents)
+
+@bot.hybrid_command()
+async def ping(ctx: commands.Context):
+    await ctx.send('pong')
+
+# TESTING SLASH END
 
 client = discord.Client(intents=intents)
 
