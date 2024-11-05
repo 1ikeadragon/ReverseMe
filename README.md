@@ -1,5 +1,5 @@
 # ReverseMe
-Simple discord bot that queries dogbolt for decompilation.
+Simple discord bot that queries dogbolt for decompilation. Add it: [ReverseMe Bot](https://discord.com/application-directory/1302859968147619880?preview=true)
 
 
 ### Usage
