@@ -125,7 +125,6 @@ async def handle_decompilation_results(message, response_json, target_decompiler
         await message.channel.send("Failed to retrieve decompilations.")
         await message.add_reaction("❌")
 
-# Commands
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
