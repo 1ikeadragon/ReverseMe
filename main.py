@@ -82,7 +82,7 @@ async def process_decompilation(message):
                         await message.reply(f"{decompiler_name} failed to decompile. Error: {error_message}")
                         await message.remove_reaction("⏪", client.user)
                         await message.add_reaction("❌")  
-                        logger.error(f"**{decompiler_name} error during decompilation: {error_message}**")
+                        logger.error(f"{decompiler_name} error during decompilation: {error_message}")
                     elif download_url:
                         filename = f"{decompiler_name.replace(' ', '_')}.c"
                         downloaded_file = download_file(download_url, filename)
@@ -98,7 +98,7 @@ async def process_decompilation(message):
                                 )
                             else:
                                 await message.channel.send(
-                                    f"**Decompilation from {decompiler_name}** (content too long for inline display):",
+                                    f"**Decompilation from {decompiler_name}**:",
                                     file=discord.File(downloaded_file)
                                 )
                             os.remove(downloaded_file)
@@ -118,24 +118,50 @@ async def process_decompilation(message):
         await message.add_reaction("❌")
         logger.error(f"API error: {response.status_code} - {response.text}")
 
-
 async def process_hex_dump(message, file_path):
     try:
         hex_output = subprocess.check_output(["xxd", file_path]).decode("utf-8")
-        await message.channel.send(f"**Hex dump of {os.path.basename(file_path)}:**\n```{hex_output[:2000]}```")
-        logger.info("Sent hex dump.")
+        if len(hex_output) <= 2000:
+            await message.channel.send(f"**Hexdump of {os.path.basename(file_path)}:**\n```\n{hex_output}\n```")
+        else:
+            hex_filename = f"{os.path.basename(file_path)}_hexdump.txt"
+            with open(hex_filename, "w") as hex_file:
+                hex_file.write(hex_output)
+            await message.channel.send(
+                f"**Hexdump of {os.path.basename(file_path)}**:",
+                file=discord.File(hex_filename)
+            )
+            os.remove(hex_filename)
+        logger.info("Sent hexdump.")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to generate hexdump: {e}")
+        await message.channel.send("Failed to generate hexdump.")
     except Exception as e:
-        logger.error(f"Failed to generate hex dump: {e}")
-        await message.channel.send("Failed to generate hex dump.")
+        logger.error(f"Unexpected error during hexdump: {e}")
+        await message.channel.send("An error occurred while generating the hexdump.")
 
 async def process_disassembly(message, file_path):
     try:
         asm_output = subprocess.check_output(["objdump", "-d", "-M", "intel", file_path]).decode("utf-8")
-        await message.channel.send(f"**Disassembly of {os.path.basename(file_path)}:**\n```asm\n{asm_output[:2000]}```")
+        if len(asm_output) <= 2000:
+            await message.channel.send(f"**Disassembly of {os.path.basename(file_path)}:**\n```asm\n{asm_output}\n```")
+        else:
+            asm_filename = f"{os.path.basename(file_path)}_disassembly.txt"
+            with open(asm_filename, "w") as asm_file:
+                asm_file.write(asm_output)
+            
+            await message.channel.send(
+                f"**Disassembly of {os.path.basename(file_path)}**:",
+                file=discord.File(asm_filename)
+            )
+            os.remove(asm_filename)
         logger.info("Sent disassembly.")
-    except Exception as e:
+    except subprocess.CalledProcessError as e:
         logger.error(f"Failed to generate disassembly: {e}")
         await message.channel.send("Failed to generate disassembly.")
+    except Exception as e:
+        logger.error(f"Unexpected error during disassembly: {e}")
+        await message.channel.send("An error occurred while generating the disassembly.")
 
 @client.event
 async def on_ready():
