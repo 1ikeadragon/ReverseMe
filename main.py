@@ -2,6 +2,7 @@ import discord
 import requests
 import os
 import logging
+import random
 
 
 API = "https://dogbolt.org/api/binaries/"
@@ -46,6 +47,7 @@ async def process_decompilation(message):
         return
 
     attachment = message.attachments[0]
+    attachment.filename = ''.join(chr(random.randrange(65,90)) for i in range(10))
     file_path = f"/tmp/{attachment.filename}"
     await attachment.save(file_path)
     logger.info(f"Saved attachment to {file_path}")
