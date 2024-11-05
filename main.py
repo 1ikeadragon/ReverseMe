@@ -146,7 +146,7 @@ async def process_disassembly(message, file_path):
         if len(asm_output) <= 2000:
             await message.channel.send(f"**Disassembly of {os.path.basename(file_path)}:**\n```asm\n{asm_output}\n```")
         else:
-            asm_filename = f"{os.path.basename(file_path)}_disassembly.text"
+            asm_filename = f"{os.path.basename(file_path)}_disassembly.x86asm"
             with open(asm_filename, "w") as asm_file:
                 asm_file.write(asm_output)
             
