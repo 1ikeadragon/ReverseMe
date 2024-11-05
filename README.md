@@ -10,3 +10,11 @@ Decompile with IDA/Binja/Ghidra/Angr:
 ```
 ;revme binja/hexrays/ghidra/angr
 ```
+Get the hexdump:
+```
+;revme hex
+```
+Get the disassembly(intel):
+```
+;revme asm
+```
