@@ -12,7 +12,6 @@ DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 DECOMPILERS = {"binja": "BinaryNinja", "angr": "angr", "ghidra": "Ghidra", "hexrays": "Hex-Rays"}
 
 intents = discord.Intents.all()
-intents.message_content = True
 bot = commands.Bot(command_prefix='/', intents=intents)
 bot_statuses = cycle(["Reversing with Binja", "Reversing with Angr", "Reversing with Ghidra", "Reversing with IDA"])
 
@@ -170,8 +169,7 @@ async def on_ready():
 
 @bot.tree.command(name="invite", description="Generate an invite link for this bot.")
 async def invite(interaction: discord.Interaction):
-    permissions = discord.Permissions()
-    permissions.update(
+    permissions = discord.Permissions(
         send_messages=True,
         embed_links=True,
         attach_files=True,
