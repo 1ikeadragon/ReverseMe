@@ -163,10 +163,11 @@ async def on_message(message):
 
 @bot.event
 async def on_ready():
+    logger.info(f"Bot ready as {bot.user}")
     change_bot_status.start()
     try:
-        await bot.tree.sync()
-        logger.info(f"Bot ready as {bot.user}")
+        synced_commands = await bot.tree.sync()
+        logger.info(f"Synced {len(synced_commands)} commands")
     except Exception as e:
         logger.error(f"Error while syncing slash command: {e}")
 
@@ -186,5 +187,8 @@ async def invite(interaction: discord.Interaction):
     bot_invite_url = discord.utils.oauth_url(bot.user.id, permissions=permissions, scopes=["bot", "applications.commands"])
     await interaction.response.send_message(f"Invite me to your server using this link: {bot_invite_url}")
 
+@bot.tree.command(name="ping", description="Ping the bot")
+async def ping(interaction: discord.Interation):
+    await interaction.response.send_message(f"{interaction.user.mention} pong!")
 
 bot.run(DISCORD_TOKEN)
