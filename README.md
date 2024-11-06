@@ -1,5 +1,5 @@
 # ReverseMe
-Simple discord bot that queries dogbolt for decompilation. Add it: [ReverseMe Bot](https://discord.com/oauth2/authorize?client_id=1302859968147619880)
+Simple reverse engineering discord bot that queries dogbolt for decompilation. Add it: [ReverseMe Bot](https://discord.com/oauth2/authorize?client_id=1302859968147619880)
 
 ### Usage
 Decompile with IDA, Ghidra, Binja, Angr:
