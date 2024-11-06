@@ -36,9 +36,8 @@ def download_file(url, filename):
         return None
 
 async def save_attachment(attachment):
-    attachment.name = ''.join(random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ') for _ in range(10))
-   # temp_filename = ''.join(random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ') for _ in range(10))
-    file_path = f"/tmp/{attachment.name}"
+    temp_filename = ''.join(random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ') for _ in range(10))
+    file_path = f"/tmp/{temp_filename}"
     await attachment.save(file_path)
     logger.info(f"Saved attachment to {file_path}")
     return file_path
