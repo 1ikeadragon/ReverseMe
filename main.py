@@ -173,7 +173,8 @@ async def on_ready():
 
 @bot.tree.command(name="invite", description="Generate an invite link for this bot.")
 async def invite(interaction: discord.Interaction):
-    permissions = discord.Permissions(
+    permissions = discord.Permissions()
+    permissions.update(
         send_messages=True,
         embed_links=True,
         attach_files=True,
