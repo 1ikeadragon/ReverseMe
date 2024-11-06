@@ -50,7 +50,7 @@ async def send_file_or_text(message, filename, content, lang=""):
         if "Hexdump" in filename:
             filename += ".txt"
         elif "asm" in lang:
-            filename += ".txt"
+            filename += ".x86asm"
         else:
             filename += ".c"
         
