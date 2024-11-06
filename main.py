@@ -48,7 +48,7 @@ async def send_file_or_text(message, filename, content, lang=""):
         await message.channel.send(f"**{filename}**:\n```{lang}\n{content}\n```")
     else:
         if "Hexdump" in filename:
-            filename += ".txt"
+            filename += ".hx"
         elif "asm" in lang:
             filename += ".x86asm"
         else:
@@ -63,7 +63,7 @@ async def send_file_or_text(message, filename, content, lang=""):
 async def process_hex_dump(message, file_path):
     try:
         hex_output = subprocess.check_output(["xxd", file_path]).decode("utf-8")
-        await send_file_or_text(message, "Hexdump", hex_output, "hxx")
+        await send_file_or_text(message, "Hexdump", hex_output, "hx")
         logger.info("Sent hexdump.")
     except subprocess.CalledProcessError as e:
         logger.error(f"Failed to generate hexdump: {e}")
