@@ -7,9 +7,7 @@ import random
 from itertools import cycle
 import subprocess
 
-API = "https://dogbolt.org/api/binaries/"
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-DECOMPILERS = {"binja": "BinaryNinja", "angr": "angr", "ghidra": "Ghidra", "ida": "Hex-Rays"}
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='/', intents=intents)
@@ -21,19 +19,6 @@ logger = logging.getLogger(__name__)
 @tasks.loop(seconds=5)
 async def change_bot_status():
     await bot.change_presence(activity=discord.Game(next(bot_statuses)))
-
-def download_file(url, filename):
-    try:
-        response = requests.get(url, stream=True)
-        response.raise_for_status()
-        with open(filename, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
-        logger.info(f"Downloaded file: {filename}")
-        return filename
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Error downloading {filename}: {e}")
-        return None
 
 async def save_attachment(attachment):
     temp_filename = ''.join(random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ') for _ in range(10))
@@ -77,61 +62,6 @@ async def process_disassembly(message, file_path):
         logger.error(f"Failed to generate disassembly: {e}")
         await message.channel.send("Failed to generate disassembly.")
 
-async def process_decompilation(message):
-    await message.add_reaction("⏪")
-    decompiler_requested = message.content.split()[1:] if len(message.content.split()) > 1 else []
-    target_decompilers = {name for key, name in DECOMPILERS.items() if not decompiler_requested or key in decompiler_requested}
-
-    if not message.attachments:
-        await message.channel.send("Please attach a file to be analyzed.")
-        await message.remove_reaction("⏪", bot.user)
-        return
-
-    attachment = message.attachments[0]
-    file_path = await save_attachment(attachment)
-    with open(file_path, "rb") as binary:
-        response = requests.post(API, files={"file": (attachment.filename, binary, "application/octet-stream")})
-    os.remove(file_path)
-    logger.info(f"Sent file to API. Status code: {response.status_code}")
-
-    if response.status_code == 429:
-        await message.channel.send("Wait for 15 seconds, rate-limited by Dogbolt.")
-        await message.remove_reaction("⏪", bot.user)
-        return
-
-    if response.status_code == 201:
-        await handle_decompilation_results(message, response.json(), target_decompilers)
-    else:
-        await message.channel.send(f"API Error: Status Code {response.status_code}")
-        await message.remove_reaction("⏪", bot.user)
-        await message.add_reaction("❌")
-
-async def handle_decompilation_results(message, response_json, target_decompilers):
-    decompilations_url = response_json.get("decompilations_url")
-    decompilation_response = requests.get(decompilations_url)
-
-    if decompilation_response.status_code == 200:
-        results = decompilation_response.json().get("results", [])
-        for item in results:
-            decompiler_name = item.get("decompiler", {}).get("name")
-            download_url = item.get("download_url")
-            error_message = item.get("error", "")
-
-            if decompiler_name in target_decompilers:
-                if error_message:
-                    await message.reply(f"{decompiler_name} failed: {error_message}")
-                    logger.error(f"{decompiler_name} error: {error_message}")
-                elif download_url:
-                    filename = f"{decompiler_name.replace(' ', '_')}.c"
-                    downloaded_file = download_file(download_url, filename)
-                    if downloaded_file:
-                        await send_file_or_text(message, f"Decompilation from {decompiler_name}", open(downloaded_file).read(), "c")
-                        os.remove(downloaded_file)
-        await message.add_reaction("✅")
-    else:
-        await message.channel.send("Failed to retrieve decompilations.")
-        await message.add_reaction("❌")
-
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
@@ -141,7 +71,7 @@ async def on_message(message):
         await message.channel.send(
             "Usage:\n"
             "1. Attach a file **MAX 2MB**.\n"
-            "2. Use `;revme` with decompiler names (e.g., `;revme binja/ghidra/ida/angr`) or no arguments to use all decompilers.\n"
+            "2. **DISABLED** Use `;revme` with decompiler names (e.g., `;revme binja/ghidra/ida/angr`) or no arguments to use all decompilers.\n"
             "3. `;revme hex` for hex dump.\n"
             "4. `;revme asm` for disassembly.\n"
         )
@@ -157,7 +87,10 @@ async def on_message(message):
         os.remove(file_path)
 
     elif message.content.startswith(";revme"):
-        await process_decompilation(message)
+        await message.channel.send(
+        "Sorry! Decompilation turned off temporarily!\n"
+        "Use `;revme asm\\hex` for now :("
+        )
 
     await bot.process_commands(message)
 
