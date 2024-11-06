@@ -47,8 +47,16 @@ async def send_file_or_text(message, filename, content, lang=""):
     if len(content) <= 2000:
         await message.channel.send(f"**{filename}**:\n```{lang}\n{content}\n```")
     else:
+        if "Hexdump" in filename or "Disassembly" in filename:
+            filename += ".txt"
+        elif "asm" in lang:
+            filename += ".asm"
+        else:
+            filename += ".c"
+        
         with open(filename, "w") as file:
             file.write(content)
+            
         await message.channel.send(file=discord.File(filename))
         os.remove(filename)
 
