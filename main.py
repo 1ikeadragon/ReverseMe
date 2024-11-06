@@ -55,7 +55,7 @@ async def send_file_or_text(message, filename, content, lang=""):
 async def process_hex_dump(message, file_path):
     try:
         hex_output = subprocess.check_output(["xxd", file_path]).decode("utf-8")
-        await send_file_or_text(message, "Hexdump", hex_output)
+        await send_file_or_text(message, "Hexdump", hex_output, "hx")
         logger.info("Sent hexdump.")
     except subprocess.CalledProcessError as e:
         logger.error(f"Failed to generate hexdump: {e}")
