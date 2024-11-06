@@ -72,6 +72,7 @@ async def on_message(message):
             "Usage:\n"
             "1. Attach a file **MAX 2MB**.\n"
             "2. **DISABLED** Use `;revme` with decompiler names (e.g., `;revme binja/ghidra/ida/angr`) or no arguments to use all decompilers.\n"
+            "See: [Note on Github](https://github.com/1ikeadragon/ReverseMe/issues/1)\n"
             "3. `;revme hex` for hex dump.\n"
             "4. `;revme asm` for disassembly.\n"
         )
@@ -88,7 +89,8 @@ async def on_message(message):
 
     elif message.content.startswith(";revme"):
         await message.channel.send(
-        "Sorry! Decompilation turned off temporarily!\n"
+        "Sorry! Decompilation **turned off temporarily!**\n"
+        "See: [Note on Github](https://github.com/1ikeadragon/ReverseMe/issues/1)\n"
         "Use `;revme asm\\hex` for now :("
         )
 
