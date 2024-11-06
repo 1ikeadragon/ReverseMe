@@ -163,9 +163,12 @@ async def on_message(message):
 
 @bot.event
 async def on_ready():
-    await bot.tree.sync()
-    logger.info(f"Bot ready as {bot.user}")
     change_bot_status.start()
+    try:
+        await bot.tree.sync()
+        logger.info(f"Bot ready as {bot.user}")
+    except Exception as e:
+        logger.error(f"Error while syncing slash command: {e}")
 
 @bot.tree.command(name="invite", description="Generate an invite link for this bot.")
 async def invite(interaction: discord.Interaction):
