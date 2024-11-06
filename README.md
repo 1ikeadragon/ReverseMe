@@ -8,7 +8,7 @@ Decompile with IDA, Ghidra, Binja, Angr:
 ```
 Decompile with IDA/Binja/Ghidra/Angr:
 ```
-;revme binja/hexrays/ghidra/angr
+;revme binja/ida/ghidra/angr
 ```
 Get the hexdump:
 ```
