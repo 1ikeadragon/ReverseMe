@@ -141,7 +141,7 @@ async def on_message(message):
         await message.channel.send(
             "Usage:\n"
             "1. Attach a file **MAX 2MB**.\n"
-            "2. Use `;revme` with decompiler names (e.g., `;revme binja`).\n"
+            "2. Use `;revme` with decompiler names (e.g., `;revme binja/ghidra/hexrays/angr`) or no arguments to use all decompilers.\n"
             "3. `;revme hex` for hex dump.\n"
             "4. `;revme asm` for disassembly.\n"
         )
